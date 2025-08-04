@@ -1,13 +1,11 @@
-import { permissionAccess } from '@/middleware/permissionAccess'
+import { ThreadRepository } from '@/domain/thread/repository/threadRepository'
 import authorization from '@/middleware/authorization'
 import express, { Response, Request } from 'express'
 import HttpResponse from '@/lib/http/HttpResponse'
 import asyncHandler from '@/helper/asyncHandler'
-import { RoleId } from '@/lib/constant/roleIds'
-import { ThreadCommentService } from './service'
 import _ from 'lodash'
 
-const service = new ThreadCommentService()
+const service = new ThreadRepository()
 
 const route = express.Router()
 
@@ -15,11 +13,11 @@ route.post(
   '/',
   authorization(),
   asyncHandler(async (req: Request, res: Response) => {
-    const values = req.getBody()
+    const formData = req.getBody()
 
     const data = await service.add({
-      ...values,
-      UserId: req.getState('userLoginState').uid,
+      ...formData,
+      AuthorId: req.getState('userLoginState').uid,
     })
 
     const httpResponse = HttpResponse.created({
@@ -34,7 +32,7 @@ route.post(
 route.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const data = await service.getAll()
+    const data = await service.getAll(req)
 
     const httpResponse = HttpResponse.get({
       message: 'Success get data',
@@ -47,11 +45,10 @@ route.get(
 
 route.get(
   '/:id',
-  authorization(),
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id
 
-    const data = await service.getByPk(id)
+    const data = await service.getById(id)
 
     const httpResponse = HttpResponse.get({
       message: 'Success get data',
@@ -82,13 +79,12 @@ route.put(
   '/:id',
   authorization(),
   asyncHandler(async (req: Request, res: Response) => {
-    const values = req.getBody()
+    const formData = req.getBody()
 
     const id = req.params.id
 
     const data = await service.update(id, {
-      ...values,
-      UserId: req.getState('userLoginState').uid,
+      ...formData,
     })
 
     const httpResponse = HttpResponse.updated({
@@ -100,4 +96,4 @@ route.put(
   })
 )
 
-export { route as ThreadCommentHandler }
+export { route as ThreadController }

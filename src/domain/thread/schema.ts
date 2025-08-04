@@ -1,8 +1,9 @@
 import * as yup from 'yup'
 
-export const threadSchema = yup.object().shape({
+export const createThreadSchema = yup.object().shape({
   title: yup.string().required('Title is required'),
   description: yup.string().required('Description is required'),
+  publishedDate: yup.date().required('Published date is required').nullable(),
   status: yup
     .string()
     .oneOf(['draft', 'publish'], "status must be one of 'draft' or 'publish'")
@@ -10,9 +11,4 @@ export const threadSchema = yup.object().shape({
   AuthorId: yup.string().required('AuthorId is required'),
 })
 
-export type CreateThreadSchema = yup.InferType<typeof threadSchema>
-export type UpdateThreadSchema = yup.InferType<typeof threadSchema>
-
-export type ThreadType = yup.InferType<typeof threadSchema> & {
-  id: string
-}
+export const updateThreadSchema = createThreadSchema.omit(['AuthorId'])

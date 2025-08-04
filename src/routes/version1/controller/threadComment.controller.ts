@@ -1,13 +1,11 @@
-import { permissionAccess } from '@/middleware/permissionAccess'
+import { ThreadCommentRepository } from '@/domain/threadComment/repository/threadCommentRepository'
 import authorization from '@/middleware/authorization'
 import express, { Response, Request } from 'express'
 import HttpResponse from '@/lib/http/HttpResponse'
 import asyncHandler from '@/helper/asyncHandler'
-import { RoleId } from '@/lib/constant/roleIds'
-import { ThreadService } from './service'
 import _ from 'lodash'
 
-const service = new ThreadService()
+const service = new ThreadCommentRepository()
 
 const route = express.Router()
 
@@ -15,17 +13,11 @@ route.post(
   '/',
   authorization(),
   asyncHandler(async (req: Request, res: Response) => {
-    const values = req.getBody()
-
-    values.publishedDate = null
-
-    if (values.status === 'publish') {
-      values.publishedDate = new Date()
-    }
+    const formData = req.getBody()
 
     const data = await service.add({
-      ...values,
-      AuthorId: req.getState('userLoginState').uid,
+      ...formData,
+      UserId: req.getState('userLoginState').uid,
     })
 
     const httpResponse = HttpResponse.created({
@@ -40,7 +32,7 @@ route.post(
 route.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const data = await service.getAll()
+    const data = await service.getAll(req)
 
     const httpResponse = HttpResponse.get({
       message: 'Success get data',
@@ -53,6 +45,7 @@ route.get(
 
 route.get(
   '/:id',
+  authorization(),
   asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id
 
@@ -87,19 +80,12 @@ route.put(
   '/:id',
   authorization(),
   asyncHandler(async (req: Request, res: Response) => {
-    const values = req.getBody()
-
-    values.publishedDate = null
-
-    if (values.status === 'publish') {
-      values.publishedDate = new Date()
-    }
+    const formData = req.getBody()
 
     const id = req.params.id
 
     const data = await service.update(id, {
-      ...values,
-      AuthorId: req.getState('userLoginState').uid,
+      ...formData,
     })
 
     const httpResponse = HttpResponse.updated({
@@ -111,4 +97,4 @@ route.put(
   })
 )
 
-export { route as ThreadHandler }
+export { route as ThreadCommentController }

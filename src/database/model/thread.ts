@@ -9,7 +9,7 @@ import {
 import BaseSchema from './_baseModel'
 import { DataTypes } from 'sequelize'
 import User from './user'
-import ThreadComment from './threadcomment'
+import ThreadComment from './threadComment'
 
 @Table({ tableName: 'thread' })
 export default class Thread extends BaseSchema {
