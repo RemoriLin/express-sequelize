@@ -34,6 +34,3 @@ export const childGrowSchema = yup.object().shape({
     .oneOf(['f', 'm'], "Gender must be one of 'f' or 'm'")
     .required('Gender harus diisi'),
 })
-
-export type DailyNutritionSchema = yup.InferType<typeof dailyNutritionSchema>
-export type ChildGrowSchema = yup.InferType<typeof childGrowSchema>

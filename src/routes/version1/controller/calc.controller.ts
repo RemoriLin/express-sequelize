@@ -1,16 +1,19 @@
 import asyncHandler from '@/helper/asyncHandler'
 import express, { Response, Request } from 'express'
-import { CalcService } from './service'
+import { CalcRepository } from '@/domain/calc/repository/calcRepository'
 import HttpResponse from '@/lib/http/HttpResponse'
+import { dailyNutritionSchema } from '@/domain/calc/schema'
 
-const service = new CalcService()
+const service = new CalcRepository()
 
 const route = express.Router()
 
 route.get(
   '/daily-nutrition',
   asyncHandler(async (req: Request, res: Response) => {
-    const values = req.getBody()
+    const formData = req.getBody()
+
+    const values = dailyNutritionSchema.validateSync(formData)
 
     const data = service.calculateDailyNutrition(values)
 
@@ -39,4 +42,4 @@ route.get(
   })
 )
 
-export { route as CalculatorHandler }
+export { route as CalculatorController }

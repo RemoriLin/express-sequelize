@@ -1,30 +1,32 @@
-import {
-  childGrowSchema,
-  ChildGrowSchema,
-  dailyNutritionSchema,
-  DailyNutritionSchema,
-} from './schema'
+import { childGrowSchema, dailyNutritionSchema } from '../schema'
 import { ErrorResponse } from '@/lib/http/ErrorResponse'
 import WhoStandardChildGrow from '@/database/model/whoStandardChildGrow'
+import {
+  CalculateChildGrowDto,
+  CalculateDailyNutritionDto,
+  ChildGrowResponseDto,
+  DailyNutritionResponseDto,
+} from '../dto'
 
-export class CalcService {
-  calculateDailyNutrition(formData: DailyNutritionSchema) {
-    const data = dailyNutritionSchema.validateSync(formData)
-
-    const ageInYears = data.ageUnit === 'month' ? data.age / 12 : data.age
+export class CalcRepository {
+  calculateDailyNutrition(
+    formData: CalculateDailyNutritionDto
+  ): DailyNutritionResponseDto {
+    const ageInYears =
+      formData.ageUnit === 'month' ? formData.age / 12 : formData.age
 
     const basalEnergy = this._calculateBasalEnergy(
-      data.weight,
-      data.height,
+      formData.weight,
+      formData.height,
       ageInYears,
-      data.gender
+      formData.gender
     )
 
     const totalCalories = this._calculateTotalCalories(
       basalEnergy,
-      data.activityLevel,
+      formData.activityLevel,
       ageInYears,
-      data.gender
+      formData.gender
     )
 
     const macronutrients = this._calculateMacronutrients(
@@ -32,7 +34,7 @@ export class CalcService {
       ageInYears
     )
 
-    const result = {
+    const result: DailyNutritionResponseDto = {
       calory: Math.round(totalCalories),
       protein: Math.round(macronutrients.protein),
       carb: Math.round(macronutrients.karbohidrat),
@@ -142,41 +144,49 @@ export class CalcService {
     }
   }
 
-  async checkChildGrow(formData: ChildGrowSchema) {
-    const data = childGrowSchema.validateSync(formData)
+  async checkChildGrow(
+    formData: CalculateChildGrowDto
+  ): Promise<ChildGrowResponseDto> {
+    const ageInMonths =
+      formData.ageUnit === 'year' ? formData.age * 12 : formData.age
 
-    const ageInMonths = data.ageUnit === 'year' ? data.age * 12 : data.age
-
-    const lms_wfa = await this._getLMSParameters(
+    const lmsWfa = await this._getLMSParameters(
       'wfa',
       ageInMonths,
-      data.gender
+      formData.gender
     )
 
-    const zScore_wfa = this._calculateZScore(
-      data.weight,
-      lms_wfa.L,
-      lms_wfa.M,
-      lms_wfa.S
+    const zScoreWfa = this._calculateZScore(
+      formData.weight,
+      lmsWfa.L,
+      lmsWfa.M,
+      lmsWfa.S
     )
-    const status_wfa = this._getNutritionStatus('wfa', zScore_wfa)
+    const statusWfa = this._getNutritionStatus('wfa', zScoreWfa)
 
-    const lms_hfa = await this._getLMSParameters(
+    const lmsHfa = await this._getLMSParameters(
       'hfa',
       ageInMonths,
-      data.gender
+      formData.gender
     )
-    const zScore_hfa = this._calculateZScore(
-      data.height,
-      lms_hfa.L,
-      lms_hfa.M,
-      lms_hfa.S
+    const zScoreHfa = this._calculateZScore(
+      formData.height,
+      lmsHfa.L,
+      lmsHfa.M,
+      lmsHfa.S
     )
-    const status_hfa = this._getNutritionStatus('hfa', zScore_hfa)
+
+    const status_hfa = this._getNutritionStatus('hfa', zScoreHfa)
 
     return {
-      status_berat_badan: status_wfa,
-      status_tinggi_badan: status_hfa,
+      wfa: {
+        status: statusWfa,
+        zScore: zScoreWfa,
+      },
+      hfa: {
+        status: status_hfa,
+        zScore: zScoreHfa,
+      },
     }
   }
 
@@ -213,14 +223,16 @@ export class CalcService {
 
   _getNutritionStatus(indicator: string | 'wfa' | 'hfa', zScore: number) {
     if (indicator === 'hfa') {
-      if (zScore < -3) return 'Stunting Berat (Severely Stunted)'
-      if (zScore < -2) return 'Stunting (Stunted)'
+      if (zScore > 3) return 'Tinggi (Tall)'
+      if (zScore < -3) return 'Sangat Pendek (Severely Stunted)'
+      if (zScore < -2) return 'Pendek (Stunted)'
       return 'Normal'
     }
 
     if (indicator === 'wfa') {
       if (zScore < -3) return 'Berat Badan Sangat Kurang (Severely Underweight)'
       if (zScore < -2) return 'Berat Badan Kurang (Underweight)'
+      if (zScore > 2) return 'Berat Badan Lebih (Overweight)'
       return 'Normal'
     }
 
