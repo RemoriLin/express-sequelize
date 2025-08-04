@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import { logger } from '@/config/httplogger.config'
 import asyncHandler from '@/helper/asyncHandler'
 import User from '@/database/model/user'
-import { UserLoginState } from '@/controllers/user/schema'
+import { UserLoginState } from '@/domain/user/dto'
 import { ErrorResponse } from '@/lib/http/ErrorResponse'
 
 export function permissionAccess(roleIds: string[]) {
