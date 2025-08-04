@@ -1,5 +1,5 @@
 import { db } from '@/database/databaseConnection'
-import ThreadComment from '@/src/database/model/threadComment'
+import ThreadComment from '@/database/model/threadComment'
 import { ErrorResponse } from '@/lib/http/ErrorResponse'
 import User from '@/database/model/user'
 import Thread from '@/database/model/thread'

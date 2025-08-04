@@ -3,7 +3,7 @@ import Thread from '@/database/model/thread'
 import { ErrorResponse } from '@/lib/http/ErrorResponse'
 import { createThreadSchema, updateThreadSchema } from '../schema'
 import User from '@/database/model/user'
-import ThreadComment from '@/src/database/model/threadComment'
+import ThreadComment from '@/database/model/threadComment'
 import {
   CreateThreadDto,
   ThreadDetailDto,
