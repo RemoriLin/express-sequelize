@@ -2,6 +2,7 @@ import roleSchema from './schema'
 import models from '@database/models/index'
 import ResponseError from '@modules/response/ResponseError'
 import PluginSqlizeQuery from '@modules/SqlizeQuery/PluginSqlizeQuery'
+import db from '../../database/data-source'
 
 const { Role } = models
 class RoleService {
@@ -47,32 +48,36 @@ class RoleService {
     return data
   }
 
-  static async create(formData, transaction) {
+  static async create(formData) {
     const value = roleSchema.create.validateSync(formData)
 
-    const data = await Role.create(value, { transaction })
+    let data
 
-    await transaction.commit()
+    await db.sequelize.transaction(async (transaction) => {
+      data = await Role.create(value, { transaction })
+    })
 
     return data
   }
 
-  static async update(id, formData, transaction) {
-    const data = await this.findById(id)
+  static async update(id, formData) {
+    let data = await this.findById(id)
 
     const value = roleSchema.create.validateSync(formData)
 
-    await data.update(value, { transaction })
+    await db.sequelize.transaction(async (transaction) => {
+      data = await data.update(value, { transaction })
+    })
 
-    await transaction.commit()
+    return data
   }
 
-  static async delete(id, transaction) {
+  static async delete(id) {
     const data = await this.findById(id)
 
-    await data.destroy(id, { transaction })
-
-    await transaction.commit()
+    await db.sequelize.transaction(async (transaction) => {
+      await data.destroy({ transaction })
+    })
   }
 }
 

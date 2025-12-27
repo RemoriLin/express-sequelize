@@ -20,14 +20,11 @@ routes.post(
   asyncHandler(async function register(req, res) {
     const formData = req.body
 
-    const txn = await req.transaction
-
     const data = await AuthService.register(
       {
         ...formData,
         RoleId: RoleId.USER,
-      },
-      txn
+      }
     )
 
     const httpResponse = HttpResponse.created({ data })

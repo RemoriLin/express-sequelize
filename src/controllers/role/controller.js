@@ -40,13 +40,11 @@ routes.post(
   asyncHandler(async (req, res) => {
     const formData = req.body
 
-    const txn = await req.transaction
-
-    const data = await RoleService.create(formData, txn)
+    const data = await RoleService.create(formData)
 
     const httpResponse = HttpResponse.created({ data })
 
-    res.status(200).json(httpResponse)
+    res.status(201).json(httpResponse)
   })
 )
 
@@ -57,11 +55,9 @@ routes.put(
   asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    const txn = await req.transaction
-
     const formData = req.body
 
-    await RoleService.update(id, formData, txn)
+    await RoleService.update(id, formData)
 
     const httpResponse = HttpResponse.updated()
 
@@ -76,9 +72,7 @@ routes.delete(
   asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    const txn = await req.transaction
-
-    await RoleService.delete(id, txn)
+    await RoleService.delete(id)
 
     const httpResponse = HttpResponse.deleted()
 

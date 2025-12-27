@@ -3,6 +3,7 @@ import userSchema from './schema'
 import models from '@database/models/index'
 import ResponseError from '@modules/response/ResponseError'
 import PluginSqlizeQuery from '@modules/SqlizeQuery/PluginSqlizeQuery'
+import db from '../../database/data-source'
 
 const { User, Role } = models
 class UserService {
@@ -10,6 +11,7 @@ class UserService {
 
   static async findAll(req) {
     const { filtered } = req.query
+
     const rawIncludes = [{ model: Role }]
 
     const includeQueryable = PluginSqlizeQuery.makeIncludeQueryable(
@@ -51,36 +53,42 @@ class UserService {
     return data
   }
 
-  static async create(formData, transaction) {
+  static async create(formData) {
     const value = userSchema.create.validateSync(formData)
 
-    const data = await User.create(value, { transaction })
+    let data
+
+    await db.sequelize.transaction(async (transaction) => {
+      data = await User.create(value, { transaction })
+    })
 
     return data
   }
 
-  static async update(id, formData, transaction) {
+  static async update(id, formData) {
     const data = await this.findById(id)
 
     const value = userSchema.update.validateSync(formData)
 
-    await data.update(value, { transaction })
-
-    await transaction.commit()
+    await db.sequelize.transaction(async (transaction) => {
+      await data.update(value, { transaction })
+    })
   }
 
-  static async delete(id, transaction) {
+  static async delete(id) {
     const data = await this.findById(id)
 
-    await data.destroy(id, transaction)
+    await db.sequelize.transaction(async (transaction) => {
+      await data.destroy({ transaction })
+    })
   }
 
-  static async changePassword(id, formData, transaction) {
+  static async changePassword(id, formData) {
     const data = await this.findById(id)
 
     const value = userSchema.changePassword.validateSync(formData)
 
-    const compareOldPassword = await bcrypt.compareSync(
+    const compareOldPassword = bcrypt.compareSync(
       value.oldPassword,
       data.password
     )
@@ -88,16 +96,16 @@ class UserService {
     if (!compareOldPassword)
       throw new ResponseError.BadRequest('Incorrect old password')
 
-    await data.update(
-      {
-        ...data,
-        ...value,
-        password: value.confirmNewPassword,
-      },
-      { transaction }
-    )
-
-    await transaction.commit()
+    await db.sequelize.transaction(async (transaction) => {
+      await data.update(
+        {
+          ...data,
+          ...value,
+          password: value.confirmNewPassword,
+        },
+        { transaction }
+      )
+    })
   }
 }
 

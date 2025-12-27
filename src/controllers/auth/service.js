@@ -5,6 +5,7 @@ import { compareSync } from 'bcrypt'
 import models from '@database/models'
 import sendMail from '@modules/sendMail'
 import ResponseError from '@modules/response/ResponseError'
+import db from '../../database/data-source'
 
 const { User } = models
 class AuthService {
@@ -33,14 +34,16 @@ class AuthService {
     }
   }
 
-  static async register(formData, transaction) {
+  static async register(formData) {
     const value = authSchema.register.validateSync(formData)
 
-    const data = await User.create({ ...value }, { transaction })
+    let data
+
+    await db.sequelize.transaction(async (transaction) => {
+      data = await User.create({ ...value }, { transaction })
+    })
 
     await sendMail.registerAccount(data.email, data.fullname)
-
-    await transaction.commit()
 
     return data
   }
